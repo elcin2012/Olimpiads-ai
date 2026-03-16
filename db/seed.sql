@@ -6,7 +6,8 @@ values
   ('IOI', 'https://ioinformatics.org', 'informatics', 1)
 on conflict (base_url) do nothing;
 
-insert into problems (subject, topic, difficulty, grade, problem_text, solution_text, answer_text, tags, content_hash)
+insert into problems (subject, topic, difficulty, grade, problem_text, solution_text, answer_text, input_format, output_format, constraints, examples, solution_idea, complexity, tags, content_hash)
 values
-  ('mathematics', 'делимость', 3, 8, 'Докажите, что сумма квадратов двух последовательных целых чисел не делится на 4.', 'Проверяем по модулю 4: n^2 и (n+1)^2 дают остатки 0/1 и 1/0, сумма всегда 1.', 'Не делится на 4.', '{алгебра,теория_чисел}', 'demo-math-1')
+  ('mathematics', 'number theory', 3, 8, 'Докажите, что сумма квадратов двух последовательных целых чисел не делится на 4.', 'Проверяем по модулю 4, всегда остаток 1.', 'Не делится на 4.', null, null, '{n<=10^9}', '{пример 1}', 'Разбор по модулю', 'O(1)', '{алгебра,теория_чисел}', 'demo-math-1'),
+  ('informatics', 'graphs', 3, 9, 'Найдите кратчайший путь в неориентированном графе.', 'Используем BFS от вершины s.', 'Длина кратчайшего пути.', 'n m\nedges', 'distance', '{1<=n<=2e5}', '{input:... output:...}', 'Классический BFS', 'O(n+m)', '{graphs,bfs}', 'demo-info-1')
 on conflict do nothing;

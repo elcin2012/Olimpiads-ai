@@ -1,4 +1,4 @@
-import { agentPrompt, modePrompt } from '@/lib/ai/prompts';
+import { modePrompt, agentPrompt } from '@/lib/ai/prompts';
 import { getLlmProvider } from '@/lib/ai/providerFactory';
 import { safeParseModelJson } from '@/lib/formatters/responseFormatter';
 import type { AgentName, AssistantPayload, AssistantResult, RetrievedProblem } from '@/types/assistant';
@@ -40,19 +40,12 @@ export async function runAgentPipeline(payload: AssistantPayload, ctx: Retrieved
   }
 
   if (payload.mode === 'HINT') {
-    const hints = await runAgent('hintGenerator', payload, ctx);
-    pipeline?.push({ agent: 'hintGenerator', status: 'ok', note: 'Подсказки сгенерированы' });
+    const hints = await runAgent('hintAgent', payload, ctx);
+    pipeline?.push({ agent: 'hintAgent', status: 'ok', note: 'Подсказки сгенерированы' });
     return { ...hints, pipeline };
-  }
-
-  if (payload.mode === 'SIMILAR') {
-    const similar = await runAgent('similarityAgent', payload, ctx);
-    pipeline?.push({ agent: 'similarityAgent', status: 'ok', note: 'Похожие задачи собраны' });
-    return { ...similar, pipeline };
   }
 
   const raw = await provider.generate(modePrompt(payload.mode, payload, ctx));
   pipeline?.push({ agent: 'solver', status: 'fallback', note: 'Использован общий режимный промпт' });
-  const parsed = safeParseModelJson(raw);
-  return { ...parsed, pipeline };
+  return { ...safeParseModelJson(raw), pipeline };
 }

@@ -19,6 +19,12 @@ create table if not exists problems (
   solution_text text,
   answer_text text,
   source_id bigint references sources(id) on delete set null,
+  input_format text,
+  output_format text,
+  constraints text[],
+  examples text[],
+  solution_idea text,
+  complexity text,
   tags text[],
   content_hash text,
   created_at timestamptz default now()

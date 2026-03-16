@@ -24,6 +24,13 @@ export const modeLabels: Record<AssistantMode, string> = {
   THEORY: 'Теория'
 };
 
+export const subjectTopics: Record<Subject, string[]> = {
+  mathematics: ['algebra', 'geometry', 'number theory', 'combinatorics', 'logic'],
+  physics: ['mechanics', 'thermodynamics', 'electricity', 'optics'],
+  chemistry: ['inorganic', 'organic', 'physical chemistry', 'analytical chemistry'],
+  informatics: ['graphs', 'dp', 'data structures', 'math', 'implementation']
+};
+
 export const SOURCE_CATALOG = [
   { name: 'IMO Official Problems', base_url: 'https://www.imo-official.org/problems.aspx', subject: 'mathematics' },
   { name: 'AoPS Olympiad Archive', base_url: 'https://artofproblemsolving.com/wiki/index.php/Olympiad_Archive', subject: 'mathematics' },

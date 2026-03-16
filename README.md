@@ -1,126 +1,95 @@
-# AI Olympiad Platform (Advanced MVP)
+# AI Olympiad Platform (Stable MVP)
 
-Платформа олимпиадной подготовки на Next.js с multi-agent pipeline, RAG-контуром и дешёвой архитектурой.
+Стабильный MVP для олимпиадной подготовки по математике, физике, химии и информатике.
 
-## Что умеет
-- Предметы: mathematics, physics, chemistry, informatics
-- Проверка валидности `subject + grade`
-- Режимы:
-  - SOLVE
-  - CREATE
-  - VERIFY
-  - HINT
-  - TOUR
-  - SIMILAR
-  - THEORY
-- Multi-agent оркестрация:
+## Возможности
+- Режимы: `SOLVE`, `CREATE`, `VERIFY`, `HINT`, `TOUR`, `SIMILAR`, `THEORY`
+- Проверка ограничений предмет/класс
+- Multi-agent pipeline:
   - SOLVE: Solver → Verifier
-  - CREATE: Generator → Solver → Verifier → Difficulty Estimator
-  - VERIFY/HINT/SIMILAR: специализированные агенты
-- RAG retriever через PostgreSQL (готово к pgvector)
-- Admin dashboard:
-  - dataset status
-  - retrieval tests
-  - parser/log view API
+  - CREATE: Retriever → Generator → Solver → Verifier → Difficulty Estimator
+- RAG через PostgreSQL + pgvector (с fallback на text search)
+- Строгие JSON-ответы и серверная нормализация результата
+- Rate limit, request cache, timeout/retry для LLM-вызовов
+- Admin dashboard: dataset status, retrieval test, logs API
 
-## Архитектура
-- Frontend/Backend: Next.js App Router + API Routes
-- Styling: Tailwind CSS
-- DB: PostgreSQL (+ pgvector)
-- Deployment: Vercel
-- LLM providers:
-  - OpenAI-compatible API
-  - Ollama-compatible local endpoint
+## Стек
+- Next.js + Tailwind
+- PostgreSQL + pgvector
+- OpenAI-compatible API или Ollama
 
-## Быстрый запуск
+## Установка и запуск локально
 ```bash
 npm install
 cp .env.example .env.local
 npm run dev
 ```
 
-## Переменные среды
-См. `.env.example`.
+Открыть:
+- `http://localhost:3000` — рабочая зона
+- `http://localhost:3000/admin` — админ-панель
 
-- `LLM_PROVIDER=openai|ollama`
-- OpenAI-compatible:
-  - `OPENAI_BASE_URL`
-  - `OPENAI_API_KEY`
-  - `OPENAI_MODEL`
-- Ollama:
-  - `OLLAMA_BASE_URL`
-  - `OLLAMA_MODEL`
-- PostgreSQL:
-  - `DATABASE_URL`
-  - `PG_SSL=true|false`
+## .env
+См. `.env.example`:
+- LLM: `LLM_PROVIDER`, `OPENAI_*`, `OLLAMA_*`
+- DB: `DATABASE_URL`, `PG_SSL`
+- Performance: `LLM_TIMEOUT_MS`, `LLM_RETRIES`, `REQUEST_CACHE_TTL_MS`
+- Ingestion: `SEED_TARGET`
 
-## API
-### POST `/api/assistant`
-```json
-{
-  "mode": "SOLVE",
-  "subject": "mathematics",
-  "grade": 8,
-  "topic": "комбинаторика",
-  "problemText": "...",
-  "studentSolution": "..."
-}
-```
-
-### Response
-```json
-{
-  "subject": "mathematics",
-  "grade": 8,
-  "mode": "SOLVE",
-  "topic": "комбинаторика",
-  "retrievedContextCount": 4,
-  "result": {
-    "idea": "...",
-    "steps": ["..."],
-    "answer": "...",
-    "difficulty": 3,
-    "pipeline": [{"agent":"solver","status":"ok","note":"..."}]
-  }
-}
-```
-
-## Dataset ingestion pipeline
-Скрипты:
-- `scripts/discover_sources.ts`
-- `scripts/ingest_source.ts`
-- `scripts/normalize_problem.ts`
-- `scripts/deduplicate_problems.ts`
-- `scripts/build_embeddings.ts`
-- `scripts/rebuild_vector_index.ts`
-
-Команды:
-```bash
-npm run dataset:discover
-npm run dataset:ingest -- "Example problem"
-npm run dataset:dedupe
-npm run dataset:embeddings
-npm run dataset:reindex
-```
-
-## Список из 50 источников
-Вшит в `lib/constants.ts` (`SOURCE_CATALOG`) и доступен через API `/api/admin/sources`.
-
-## База данных
-Схема в `db/schema.sql`:
+## Схема БД
+Таблицы:
 - `sources`
 - `problems`
 - `problem_embeddings`
 - `assistant_requests`
 
-## Deploy (Vercel)
+Поля информатики поддержаны в `problems`:
+`input_format`, `output_format`, `constraints`, `examples`, `solution_idea`, `complexity`.
+
+Применить схему:
+```bash
+psql "$DATABASE_URL" -f db/schema.sql
+psql "$DATABASE_URL" -f db/seed.sql
+```
+
+## Data ingestion pipeline
+Скрипты:
+- `discover_sources.ts`
+- `ingest_source.ts`
+- `normalize_problem.ts`
+- `deduplicate_problems.ts`
+- `build_embeddings.ts`
+- `rebuild_vector_index.ts`
+
+Команды:
+```bash
+npm run dataset:discover
+SEED_TARGET=100 npm run dataset:ingest
+SEED_TARGET=1000 npm run dataset:ingest
+npm run dataset:dedupe
+npm run dataset:embeddings
+npm run dataset:reindex
+```
+
+## API
+`POST /api/assistant`
+```json
+{
+  "mode": "SOLVE",
+  "subject": "mathematics",
+  "grade": 8,
+  "topic": "algebra",
+  "problemText": "...",
+  "studentSolution": "..."
+}
+```
+
+## Деплой (Vercel)
 1. Push в GitHub.
 2. Import в Vercel.
-3. Добавить env-переменные.
+3. Добавить переменные окружения из `.env.example`.
 4. Deploy.
 
-## Переключение LLM
-- `LLM_PROVIDER=openai` → OpenAI-compatible endpoint
-- `LLM_PROVIDER=ollama` → локальный Ollama endpoint
-
-Логика выбора: `lib/ai/providerFactory.ts`.
+## Переключение провайдера
+- OpenAI-compatible: `LLM_PROVIDER=openai`
+- Ollama: `LLM_PROVIDER=ollama`

@@ -1,13 +1,4 @@
-export const MODES = [
-  'SOLVE',
-  'CREATE',
-  'VERIFY',
-  'HINT',
-  'TOUR',
-  'SIMILAR',
-  'THEORY'
-] as const;
-
+export const MODES = ['SOLVE', 'CREATE', 'VERIFY', 'HINT', 'TOUR', 'SIMILAR', 'THEORY'] as const;
 export type AssistantMode = (typeof MODES)[number];
 
 export const SUBJECTS = ['mathematics', 'physics', 'chemistry', 'informatics'] as const;
@@ -22,13 +13,16 @@ export type AssistantPayload = {
   studentSolution?: string;
 };
 
-export type AgentName =
-  | 'solver'
-  | 'verifier'
-  | 'generator'
-  | 'difficultyEstimator'
-  | 'similarityAgent'
-  | 'hintGenerator';
+export type AgentName = 'solver' | 'verifier' | 'generator' | 'difficultyEstimator' | 'hintAgent';
+
+export type InformaticsMeta = {
+  inputFormat?: string;
+  outputFormat?: string;
+  constraints?: string[];
+  examples?: Array<{ input: string; output: string }>;
+  solutionIdea?: string;
+  complexity?: string;
+};
 
 export type AssistantResult = {
   idea?: string;
@@ -58,6 +52,7 @@ export type AssistantResult = {
     shortIdea?: string;
     difficulty?: number;
   }>;
+  informatics?: InformaticsMeta;
   uncertainty?: string;
   pipeline?: Array<{ agent: AgentName; status: 'ok' | 'fallback'; note: string }>;
 };
@@ -80,5 +75,11 @@ export type RetrievedProblem = {
   problem_text: string;
   solution_text: string | null;
   answer_text: string | null;
+  input_format: string | null;
+  output_format: string | null;
+  constraints: string[] | null;
+  examples: string[] | null;
+  solution_idea: string | null;
+  complexity: string | null;
   tags: string[] | null;
 };

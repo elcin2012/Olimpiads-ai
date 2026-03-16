@@ -1,4 +1,5 @@
 import type { AssistantPayload, AssistantResponse, AssistantResult } from '@/types/assistant';
+import { normalizeResultByMode } from '@/lib/formatters/resultValidator';
 
 export function safeParseModelJson(raw: string): AssistantResult {
   try {
@@ -23,7 +24,7 @@ export function formatAssistantResponse(payload: AssistantPayload, result: Assis
     grade: payload.grade,
     mode: payload.mode,
     topic: payload.topic ?? 'Не указана',
-    result,
+    result: normalizeResultByMode(payload.mode, result),
     retrievedContextCount
   };
 }
