@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  PARENT
+  ADMIN
+}
+
+enum OlympiadLevel {
+  BEGINNER
+  ADVANCED
+  PRO
+}
+
+model User {
+  id             String     @id @default(cuid())
+  email          String     @unique
+  name           String
+  passwordHash   String
+  role           UserRole
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  studentProfile Student?
+  parentProfile  Parent?
+  attempts       Attempt[]
+  managedContent Olympiad[] @relation("OlympiadAuthor")
+}
+
+model Student {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  grade       Int
+  user        User      @relation(fields: [userId], references: [id])
+  parentLinks ParentKid[]
+  attempts    Attempt[]
+}
+
+model Parent {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id])
+  children    ParentKid[]
+}
+
+model ParentKid {
+  id        String   @id @default(cuid())
+  parentId  String
+  studentId String
+  parent    Parent   @relation(fields: [parentId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([parentId, studentId])
+}
+
+model Subject {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  topics    Topic[]
+  olympiads Olympiad[]
+}
+
+model Topic {
+  id        String     @id @default(cuid())
+  name      String
+  subjectId String
+  subject   Subject    @relation(fields: [subjectId], references: [id])
+  questions Question[]
+
+  @@unique([subjectId, name])
+}
+
+model Olympiad {
+  id              String       @id @default(cuid())
+  title           String
+  slug            String       @unique
+  description     String
+  level           OlympiadLevel
+  ageGroup        String
+  durationMinutes Int
+  isPublished     Boolean      @default(false)
+  subjectId       String
+  authorId        String
+  subject         Subject      @relation(fields: [subjectId], references: [id])
+  author          User         @relation("OlympiadAuthor", fields: [authorId], references: [id])
+  questions       Question[]
+  attempts        Attempt[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  olympiadId    String
+  topicId       String
+  text          String
+  options       Json
+  correctAnswer String
+  explanation   String
+  difficulty    Int
+  olympiad      Olympiad @relation(fields: [olympiadId], references: [id])
+  topic         Topic    @relation(fields: [topicId], references: [id])
+}
+
+model Attempt {
+  id          String          @id @default(cuid())
+  olympiadId  String
+  studentId   String
+  startedAt   DateTime        @default(now())
+  submittedAt DateTime?
+  score       Int?
+  olympiad    Olympiad        @relation(fields: [olympiadId], references: [id])
+  student     User            @relation(fields: [studentId], references: [id])
+  answers     AttemptAnswer[]
+  aiInsights  AttemptInsight?
+}
+
+model AttemptAnswer {
+  id          String  @id @default(cuid())
+  attemptId   String
+  questionId  String
+  selected    String
+  isCorrect   Boolean
+  attempt     Attempt @relation(fields: [attemptId], references: [id])
+
+  @@unique([attemptId, questionId])
+}
+
+model AttemptInsight {
+  id             String  @id @default(cuid())
+  attemptId       String  @unique
+  weakTopics      String[]
+  recommendations String[]
+  attempt         Attempt @relation(fields: [attemptId], references: [id])
+}

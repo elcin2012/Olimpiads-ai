@@ -1,95 +1,136 @@
-# Олимпиадный AI ассистент (MVP)
+# olimpiads.ai
 
-MVP веб-приложение на Next.js + Tailwind для олимпиадных задач.
+Современная образовательная веб-платформа для школьных онлайн-олимпиад с AI-аналитикой, рекомендациями и кабинетами для ученика, родителя и администратора.
 
-## Возможности
-- 5 режимов: `SOLVE`, `CREATE`, `CHECK`, `HINT`, `TOUR`
-- Предметы: математика, физика, химия, информатика
-- Проверка ограничений класс/предмет на backend
-- Абстракция LLM-провайдеров: OpenAI-compatible и Ollama
-- API: `/api/assistant`
-- Простая debug-страница для теста промптов
+## 1) Структура проекта
 
-## Стек
-- Next.js (App Router)
-- Tailwind CSS
-- API routes (встроенный backend)
-- PostgreSQL/Supabase-ready схема
-- Деплой: Vercel
+```bash
+.
+├── app/
+│   ├── page.tsx
+│   ├── olympiads/page.tsx
+│   ├── olympiads/[slug]/page.tsx
+│   ├── attempt/[attemptId]/page.tsx
+│   ├── results/[attemptId]/page.tsx
+│   ├── dashboard/student/page.tsx
+│   ├── dashboard/parent/page.tsx
+│   ├── admin/page.tsx
+│   └── api/
+│       ├── olympiads/route.ts
+│       ├── attempt/start/route.ts
+│       ├── attempt/submit/route.ts
+│       ├── attempt/[attemptId]/route.ts
+│       └── ai/
+│           ├── recommendations/route.ts
+│           └── generate-problem/route.ts
+├── components/
+│   ├── ui/
+│   ├── olympiads/
+│   ├── attempt/
+│   ├── results/
+│   └── dashboard/
+├── lib/
+│   ├── data/mockData.ts
+│   ├── domain/
+│   │   ├── types.ts
+│   │   ├── scoring.ts
+│   │   └── attemptStore.ts
+│   └── ai/educationAi.ts
+├── prisma/
+│   ├── schema.prisma
+│   └── seed.ts
+└── .env.example
+```
 
-## Быстрый старт локально
-1. Установите зависимости:
-   ```bash
-   npm install
-   ```
-2. Создайте env:
-   ```bash
-   cp .env.example .env.local
-   ```
-3. Укажите ключи/URL провайдера в `.env.local`.
-4. Запустите:
-   ```bash
-   npm run dev
-   ```
-5. Откройте `http://localhost:3000`.
+## 2) Prisma schema
 
-## Переменные окружения
-- `LLM_PROVIDER=openai|ollama`
-- OpenAI-compatible:
-  - `OPENAI_BASE_URL`
-  - `OPENAI_API_KEY`
-  - `OPENAI_MODEL`
-- Ollama:
-  - `OLLAMA_BASE_URL`
-  - `OLLAMA_MODEL`
-- Опционально: `DATABASE_URL`
+Полная схема в `prisma/schema.prisma`.
 
-## Как переключить провайдера
-- Для OpenAI-compatible:
-  - `LLM_PROVIDER=openai`
-- Для Ollama:
-  - `LLM_PROVIDER=ollama`
+Включает:
+- роли пользователей: `STUDENT`, `PARENT`, `ADMIN`
+- предметы, темы, олимпиады, вопросы
+- попытки, ответы, AI-insight по слабым темам
+- связи родитель ↔ ребенок
 
-Логика переключения в `lib/ai/providerFactory.ts`.
+## 3) Основные страницы
 
-## API контракт
-`POST /api/assistant`
+- Главная: `app/page.tsx`
+- Каталог олимпиад: `app/olympiads/page.tsx`
+- Детали олимпиады: `app/olympiads/[slug]/page.tsx`
+- Прохождение теста: `app/attempt/[attemptId]/page.tsx`
+- Результаты с AI-разбором: `app/results/[attemptId]/page.tsx`
+- Кабинеты: ученик/родитель/админ
+
+## 4) UI-компоненты
+
+- базовые UI: `components/ui/card.tsx`, `components/ui/button.tsx`
+- карточка олимпиады: `components/olympiads/olympiad-card.tsx`
+- раннер теста: `components/attempt/attempt-runner.tsx`
+- блок результатов: `components/results/result-summary.tsx`
+- график прогресса: `components/dashboard/progress-chart.tsx`
+- AI генератор задачи для админа: `components/dashboard/ai-problem-generator.tsx`
+
+## 5) Backend/API и server logic
+
+- старт попытки: `POST /api/attempt/start`
+- отправка ответов и подсчет: `POST /api/attempt/submit`
+- получение результатов: `GET /api/attempt/:attemptId`
+- AI рекомендации: `POST /api/ai/recommendations`
+- AI генерация задач: `POST /api/ai/generate-problem`
+
+Логика подсчета вынесена в `lib/domain/scoring.ts`.
+
+## 6) AI-модуль
+
+`lib/ai/educationAi.ts`:
+- `buildAiRecommendations` — анализ слабых тем + план подготовки
+- `generateAiProblem` — генерация задачи в нужном JSON-формате
+
+Формат AI-задачи:
+
 ```json
 {
-  "mode": "SOLVE",
-  "subject": "mathematics",
-  "grade": 7,
-  "topic": "комбинаторика",
-  "problemText": "...",
-  "studentSolution": "..."
+  "problem_text": "string",
+  "options": ["A", "B", "C", "D"],
+  "correct_answer": "string",
+  "explanation": "string",
+  "topic": "string",
+  "difficulty": 1
 }
 ```
 
-Ответ:
-```json
-{
-  "subject": "mathematics",
-  "grade": 7,
-  "mode": "SOLVE",
-  "topic": "комбинаторика",
-  "result": {
-    "idea": "...",
-    "steps": ["..."],
-    "answer": "...",
-    "difficulty": 3,
-    "hints": ["...", "..."]
-  }
-}
+## 7) Seed-данные
+
+Файл `prisma/seed.ts` создает:
+- администратора
+- предмет и тему
+- олимпиаду
+- пример вопроса
+
+## 8) Запуск проекта
+
+```bash
+npm install
+cp .env.example .env
+npm run dev
 ```
 
-## Деплой в Vercel
-1. Push репозиторий на GitHub.
-2. Import проекта в Vercel.
-3. Добавьте переменные окружения из `.env.example`.
-4. Нажмите Deploy.
+Для Prisma:
 
-## Бюджетная архитектура
-- Один Next.js сервис (frontend + backend)
-- LLM только по API (или локально через Ollama)
-- БД опциональна (для логов)
-- Основные затраты: Vercel + LLM usage + storage
+```bash
+npx prisma generate
+npx prisma migrate dev --name init
+npx prisma db seed
+```
+
+Открыть: `http://localhost:3000`
+
+---
+
+## Roadmap production
+
+- Подключить NextAuth/Clerk для полноценной auth
+- Перевести in-memory attempt store в PostgreSQL + Prisma
+- Добавить real-time таймер и защиту от переключения вкладок
+- Интегрировать OpenAI API для реальной генерации и объяснений
+- Добавить unit/e2e тесты
