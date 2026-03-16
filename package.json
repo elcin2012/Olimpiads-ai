@@ -12,7 +12,8 @@
     "dataset:ingest": "tsx scripts/ingest_source.ts",
     "dataset:dedupe": "tsx scripts/deduplicate_problems.ts",
     "dataset:embeddings": "tsx scripts/build_embeddings.ts",
-    "dataset:reindex": "tsx scripts/rebuild_vector_index.ts"
+    "dataset:reindex": "tsx scripts/rebuild_vector_index.ts",
+    "db:init": "tsx scripts/init_db.ts"
   },
   "dependencies": {
     "next": "14.2.5",

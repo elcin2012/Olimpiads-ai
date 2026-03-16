@@ -2,6 +2,10 @@
 
 Стабильный MVP для олимпиадной подготовки по математике, физике, химии и информатике.
 
+## Что исправлено
+- Починена генерация задач: если LLM недоступна/ошиблась, включается локальный fallback-генератор.
+- Решена проблема «нет данных в БД»: добавлен `npm run db:init` + авто-дозаполнение минимального датасета при запуске API.
+
 ## Возможности
 - Режимы: `SOLVE`, `CREATE`, `VERIFY`, `HINT`, `TOUR`, `SIMILAR`, `THEORY`
 - Проверка ограничений предмет/класс
@@ -18,10 +22,11 @@
 - PostgreSQL + pgvector
 - OpenAI-compatible API или Ollama
 
-## Установка и запуск локально
+## Запуск локально
 ```bash
 npm install
 cp .env.example .env.local
+npm run db:init
 npm run dev
 ```
 
@@ -46,10 +51,9 @@ npm run dev
 Поля информатики поддержаны в `problems`:
 `input_format`, `output_format`, `constraints`, `examples`, `solution_idea`, `complexity`.
 
-Применить схему:
+## Инициализация БД
 ```bash
-psql "$DATABASE_URL" -f db/schema.sql
-psql "$DATABASE_URL" -f db/seed.sql
+npm run db:init
 ```
 
 ## Data ingestion pipeline
@@ -75,7 +79,7 @@ npm run dataset:reindex
 `POST /api/assistant`
 ```json
 {
-  "mode": "SOLVE",
+  "mode": "CREATE",
   "subject": "mathematics",
   "grade": 8,
   "topic": "algebra",
